@@ -1,0 +1,92 @@
+import type { Contact } from "@/types";
+
+// Curated palette: one accent color per contact
+const palette = ["#7C6FFF", "#34D399", "#FB923C", "#F472B6", "#60A5FA"];
+
+export const mockContacts: Contact[] = [
+  {
+    id: 1,
+    name: "Aryan Mehta",
+    role: "ML Engineer",
+    company: "Zepto",
+    location: "Mumbai",
+    avatar: "AM",
+    color: palette[0],
+    topics: ["LLMs", "Startup ideas", "Funding"],
+    contactInfo: ["aryan@zepto.com", "+91 98765 43210", "linkedin.com/in/aryanmehta", "twitter.com/aryanmehta", "github.com/aryanmehta"],
+    followUps: ["Send GitHub repo", "Connect on LinkedIn"],
+    summary:
+      "Discussed building AI-native products. He's raising a seed round for his side project focused on supply chain automation.",
+    metAt: "DevFest Kolkata 2026",
+    metDate: "Feb 25, 2026",
+    img: "https://avatars.githubusercontent.com/u/12345678?v=4",
+  },
+  {
+    id: 2,
+    name: "Priya Nair",
+    role: "Product Designer",
+    company: "Swiggy",
+    location: "Bangalore",
+    avatar: "PN",
+    color: palette[1],
+    topics: [],
+    followUps: [],
+    contactInfo: [],
+    summary:
+      "Talked about the future of AI-generated UI components. She's building a design system library and wants collaborators.",
+    metAt: "DevFest Kolkata 2026",
+    metDate: "Feb 25, 2026",
+    img: "",
+  },
+  {
+    id: 3,
+    name: "Rohan Das",
+    role: "Founder & CEO",
+    company: "HealthStack AI",
+    location: "Kolkata",
+    avatar: "RD",
+    color: palette[2],
+    topics: ["Healthcare AI", "B2B SaaS", "Go-to-market"],
+    followUps: ["Intro to investor contact"],
+    contactInfo: ["rohan@healthstack.ai", "+91 98765 43212", "linkedin.com/in/rohandas", "twitter.com/rohandas", "github.com/rohandas"],
+    summary:
+      "Building AI diagnostics for tier-2 cities. Looking for technical co-founder with ML background.",
+    metAt: "DevFest Kolkata 2026",
+    metDate: "Feb 25, 2026",
+    img: "https://avatars.githubusercontent.com/u/34567890?v=4",
+  },
+  {
+    id: 4,
+    name: "Sneha Kapoor",
+    role: "VC Analyst",
+    company: "Sequoia India",
+    location: "Delhi",
+    avatar: "SK",
+    color: palette[3],
+    topics: ["Deep tech", "Consumer AI", "Portfolio"],
+    followUps: ["Send one-pager", "Follow up next week"],
+    contactInfo: ["sneha@sequoia.com", "+91 98765 43213", "linkedin.com/in/sneha-kapoor", "twitter.com/sneha-kapoor", "github.com/sneha-kapoor"],
+    summary:
+      "Met briefly near the networking booth. She's actively scouting AI infrastructure plays. Mentioned preference for B2B.",
+    metAt: "DevFest Kolkata 2026",
+    metDate: "Feb 25, 2026",
+    img: "https://avatars.githubusercontent.com/u/45678901?v=4",
+  },
+  {
+    id: 5,
+    name: "Vikram Iyer",
+    role: "Backend Engineer",
+    company: "CRED",
+    location: "Bangalore",
+    avatar: "VI",
+    color: palette[4],
+    topics: ["Distributed systems", "Rust", "Open source"],
+    followUps: ["Check out his OSS project"],
+    contactInfo: ["vikram@cred.com", "+91 98765 43214", "linkedin.com/in/vikramiyer", "twitter.com/vikramiyer", "github.com/vikramiyer"],
+    summary:
+      "Passionate about systems programming. Showed me his open source distributed queue built in Rust. Very impressive.",
+    metAt: "Rootconf 2025",
+    metDate: "Nov 12, 2025",
+    img: "https://avatars.githubusercontent.com/u/56789012?v=4",
+  },
+];
