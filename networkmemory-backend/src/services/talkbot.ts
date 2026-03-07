@@ -14,42 +14,36 @@
  * - Vector embeddings for similarity matching
  */
 
-import { GoogleGenerativeAI, FunctionDeclaration, Tool, SchemaType } from '@google/generative-ai';
+import { GoogleGenAI } from '@google/genai';
 import { db } from '../db/index.js';
 import { chatMessages, contacts } from '../db/schema.js';
 import { eq, desc, and } from 'drizzle-orm';
 import { searchContactsSemantically } from './semanticSearch.js';
 
-// Initialize Gemini AI
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
+// Initialize Gemini AI with new library
+const genAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || '' });
 
-// Define the contact search tool for AI
-const searchContactsTool: FunctionDeclaration = {
+// Define the contact search tool for AI using new library format
+const searchContactsTool: any = {
   name: 'search_contacts',
   description: `Search the user's network for people with specific skills, expertise, or topics.
   Use this when the user needs help with something or wants to collaborate.
   Returns people from their network who match the query.`,
   parameters: {
-    type: SchemaType.OBJECT,
+    type: 'object',
     properties: {
       query: {
-        type: SchemaType.STRING,
+        type: 'string',
         description: 'What kind of person or expertise to search for (e.g., "blockchain expert", "mobile app developer", "marketing specialist")'
       },
       limit: {
-        type: SchemaType.NUMBER,
+        type: 'number',
         description: 'Maximum number of contacts to return (default: 5)'
       }
     },
     required: ['query']
   }
 };
-
-const tools: Tool[] = [
-  {
-    functionDeclarations: [searchContactsTool]
-  }
-];
 
 /**
  * Get chat history for user (last N messages)
@@ -117,7 +111,7 @@ export async function processChatMessage(
     const history = await getChatHistory(userId, sessionId);
     console.log(`[TALKBOT] Loaded ${history.length} previous messages`);
 
-    // Prepare context for AI
+    // Prepare system instruction
     const systemInstruction = `You are TalkBot, an AI assistant that helps users brainstorm ideas and find collaborators from their professional network.
 
 **Your Role:**
@@ -137,45 +131,58 @@ export async function processChatMessage(
 - When you find contacts, explain why they're a good match
 - Suggest next steps (e.g., "Want me to draft a message?")`;
 
-    // Create Gemini model with tools
-    const model = genAI.getGenerativeModel({
-      model: 'gemini-1.5-flash',
-      tools: tools,
-      systemInstruction: systemInstruction
+    // Build conversation contents
+    const contents = [
+      { role: 'user', parts: [{ text: systemInstruction }] },
+      ...history.map((msg: any) => ({
+        role: msg.role === 'assistant' ? 'model' : 'user',
+        parts: [{ text: msg.content }]
+      })),
+      { role: 'user', parts: [{ text: userMessage }] }
+    ];
+
+    // Call Gemini with new API and tools
+    const response = await genAI.models.generateContent({
+      model: 'gemini-2.5-flash',  // Latest free tier model
+      contents: contents,
+      config: {
+        tools: [
+          {
+            functionDeclarations: [searchContactsTool]
+          }
+        ]
+      }
     });
 
-    // Build chat history for Gemini
-    const chatHistory = history.map((msg: any) => ({
-      role: msg.role === 'user' ? 'user' : 'model',
-      parts: [{ text: msg.content }]
-    }));
+    // Check for function calls
+    const candidates = response.candidates || [];
+    if (candidates.length === 0) {
+      throw new Error('No response candidates from AI');
+    }
 
-    // Start chat
-    const chat = model.startChat({
-      history: chatHistory
-    });
+    const candidate = candidates[0];
+    const parts = candidate.content?.parts || [];
 
-    // Send user message
-    const result = await chat.sendMessage(userMessage);
-    const response = result.response;
+    // Check if there are function calls
+    const functionCalls = parts.filter((part: any) => part.functionCall);
 
-    // Check if AI wants to call a function
-    const functionCalls = response.functionCalls();
-
-    if (functionCalls && functionCalls.length > 0) {
+    if (functionCalls.length > 0) {
       console.log(`[TALKBOT] AI requested ${functionCalls.length} tool call(s)`);
 
       const toolResults: any[] = [];
+      const executedCalls: any[] = [];
 
-      for (const call of functionCalls) {
+      for (const part of functionCalls) {
+        const call = part.functionCall;
+        if (!call) continue;
+
         console.log(`[TALKBOT] Executing tool: ${call.name}`);
         console.log(`  Args: ${JSON.stringify(call.args)}`);
 
-        if (call.name === 'search_contacts') {
+        if (call.name === 'search_contacts' && call.args) {
           // Execute semantic search
-          const args = call.args as { query: string; limit?: number };
-          const query = args.query;
-          const limit = args.limit || 5;
+          const query = call.args.query as string;
+          const limit = (call.args.limit as number) || 5;
 
           const searchResults = await searchContactsSemantically(userId, query, limit);
 
@@ -195,28 +202,42 @@ export async function processChatMessage(
             }
           });
 
+          executedCalls.push(call);
           console.log(`[TALKBOT] Found ${searchResults.length} matching contacts`);
         }
       }
 
-      // Send tool results back to AI
-      const finalResult = await chat.sendMessage(toolResults);
-      const finalResponse = finalResult.response.text();
+      // Send tool results back to AI for final response
+      const finalResponse = await genAI.models.generateContent({
+        model: 'gemini-2.5-flash',  // Same model for consistency
+        contents: [
+          ...contents,
+          {
+            role: 'model',
+            parts: functionCalls
+          },
+          {
+            role: 'user',
+            parts: toolResults
+          }
+        ]
+      });
 
-      console.log(`[TALKBOT] Final AI response (with tool results): "${finalResponse}"`);
+      const finalText = finalResponse.text || '';
+      console.log(`[TALKBOT] Final AI response (with tool results): "${finalText}"`);
 
       // Save assistant message with tool usage
-      await saveChatMessage(userId, sessionId, 'assistant', finalResponse, functionCalls, toolResults);
+      await saveChatMessage(userId, sessionId, 'assistant', finalText, executedCalls, toolResults);
 
       return {
         success: true,
-        response: finalResponse,
-        toolCalls: functionCalls
+        response: finalText,
+        toolCalls: executedCalls
       };
 
     } else {
       // No tool calls - just return AI response
-      const aiResponse = response.text();
+      const aiResponse = response.text || '';
       console.log(`[TALKBOT] AI response: "${aiResponse}"`);
 
       // Save assistant message
