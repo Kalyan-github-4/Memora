@@ -1,0 +1,96 @@
+# ===================================
+# Root .gitignore for NetworkMemory
+# ===================================
+
+# ===== Environment & Secrets =====
+.env
+.env.local
+.env.production
+.env.development
+
+# ===== Dependencies =====
+node_modules/
+venv/
+env/
+ENV/
+__pycache__/
+*.py[cod]
+*$py.class
+
+# ===== Build Artifacts =====
+dist/
+build/
+*.tsbuildinfo
+.drizzle/
+
+# ===== Compressed Archives =====
+*.zip
+*.tar
+*.tar.gz
+*.rar
+*.7z
+
+# ===== Large Media Files =====
+*.wav
+*.mp3
+*.m4a
+*.flac
+*.ogg
+*.mp4
+*.avi
+*.mov
+
+# ===== Database Files =====
+*.db
+*.sqlite
+*.db-journal
+
+# ===== IDE & Editor =====
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# ===== Logs =====
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ===== Testing =====
+coverage/
+.nyc_output/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# ===== Temporary Files =====
+tmp/
+temp/
+/tmp
+NUL
+
+# ===== Lock Files (optional - uncomment if needed) =====
+# package-lock.json
+# yarn.lock
+# pnpm-lock.yaml
+
+# ===== Documentation (optional - comment out if you want to commit docs) =====
+# Uncomment these lines if you DON'T want to commit documentation files
+# *.md
+# !README.md
+
+# ===== Claude AI =====
+.claude/
+
+# ===== Model Files =====
+*.pt
+*.bin
+models/
+
+*.md
+!README.md
